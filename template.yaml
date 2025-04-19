@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Sample Python Lambda with app/ structure
+
+Resources:
+  MyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: app/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.12
+      MemorySize: 128
+      Timeout: 5
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: get
