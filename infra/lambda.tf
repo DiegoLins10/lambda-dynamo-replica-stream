@@ -29,7 +29,7 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
 
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  source_file = "../${path.module}/app/lambda_function.py"
+  source_file = "/${path.module}../app/lambda_function.py"
   output_path = "${path.module}/lambda_function.zip"
 }
 

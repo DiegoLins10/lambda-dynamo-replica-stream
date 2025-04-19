@@ -39,9 +39,7 @@ jobs:
       - name: Import IAM Role if not in state
         run: |
           cd infra
-          if ! terraform state list | grep -q 'aws_iam_role.lambda_exec_role'; then
-            terraform import aws_iam_role.lambda_exec_role lambda_exec_role
-          fi
+          terraform import aws_iam_role.lambda_exec_role lambda_exec_role || true
 
       - name: Terraform Plan
         run: |
