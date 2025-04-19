@@ -32,14 +32,24 @@ jobs:
           cd infra
           terraform validate
 
+      - name: Copy Lambda function to Terraform directory
+        run: |
+          cp app/lambda_function.py infra/lambda_function.py
+
+      - name: Import IAM Role if not in state
+        run: |
+          cd infra
+          terraform state list | grep aws_iam_role.lambda_exec_role || terraform import aws_iam_role.lambda_exec_role lambda_exec_role || echo "IAM Role not found for import"
+
+      - name: Import Lambda function if not in state
+        run: |
+          cd infra
+          terraform state list | grep aws_lambda_function.hello_lambda || terraform import aws_lambda_function.hello_lambda lambda-dynamo-replica-stream || echo "Lambda not found for import"
+
       - name: Terraform Plan
         run: |
           cd infra
           terraform plan
-
-      - name: Copy Lambda function to Terraform directory
-        run: |
-          cp app/lambda_function.py infra/lambda_function.py
 
       - name: Terraform Apply
         run: |
