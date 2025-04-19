@@ -41,6 +41,11 @@ jobs:
         run: |
           cp app/lambda_function.py infra/lambda_function.py
 
+      - name: Force Replace IAM Role
+        run: |
+          cd infra
+          terraform taint aws_iam_role.lambda_exec_role
+
       - name: Terraform Apply
         run: |
           cd infra
