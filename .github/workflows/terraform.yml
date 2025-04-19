@@ -32,19 +32,14 @@ jobs:
           cd infra
           terraform validate
 
-      - name: Copy Lambda function to Terraform directory
-        run: |
-          cp app/lambda_function.py infra/lambda_function.py
-
-      - name: Import IAM Role if not in state
-        run: |
-          cd infra
-          terraform import aws_iam_role.lambda_exec_role lambda_exec_role || true
-
       - name: Terraform Plan
         run: |
           cd infra
           terraform plan
+
+      - name: Copy Lambda function to Terraform directory
+        run: |
+          cp app/lambda_function.py infra/lambda_function.py
 
       - name: Terraform Apply
         run: |
