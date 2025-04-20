@@ -80,4 +80,8 @@ resource "aws_lambda_event_source_mapping" "dynamodb_stream_trigger" {
   function_name     = aws_lambda_function.hello_lambda.arn
   starting_position = "LATEST"
   batch_size        = 1
+
+    lifecycle {
+    create_before_destroy = true
+  }
 }
