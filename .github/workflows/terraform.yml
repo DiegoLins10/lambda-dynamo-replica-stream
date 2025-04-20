@@ -32,6 +32,11 @@ jobs:
           cd infra
           terraform validate
 
+      - name: Terraform Destroy (Optional)
+        run: |
+          cd infra
+          terraform destroy -auto-approve || echo "No resources to destroy"
+
       - name: Copy Lambda function to Terraform directory
         run: |
           cp app/lambda_function.py infra/lambda_function.py
@@ -45,6 +50,17 @@ jobs:
         run: |
           cd infra
           terraform state list | grep aws_lambda_function.hello_lambda || terraform import aws_lambda_function.hello_lambda lambda-dynamo-replica-stream || echo "Lambda not found for import"
+
+      - name: Import Event Source Mapping if not in state
+        run: |
+          cd infra
+          EVENT_SOURCE_UUID=$(terraform state list | grep aws_lambda_event_source_mapping.dynamodb_stream_trigger || echo "Mapping not found")
+          if [[ "$EVENT_SOURCE_UUID" != "Mapping not found" ]]; then
+            # Import the existing Event Source Mapping using the UUID
+            terraform import aws_lambda_event_source_mapping.dynamodb_stream_trigger $EVENT_SOURCE_UUID || echo "Event source mapping not found for import"
+          else
+            echo "Event Source Mapping does not exist"
+          fi
 
       - name: Terraform Plan
         run: |
