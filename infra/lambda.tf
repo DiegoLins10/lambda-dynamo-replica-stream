@@ -18,7 +18,7 @@ resource "aws_iam_role" "lambda_exec_role" {
 
   # Política Inline para DynamoDB Streams
   inline_policy {
-    name = "dynamodb-streams-policy"
+    name = "dynamodb-streams-policy-v1"
     policy = jsonencode({
       Version = "2012-10-17"
       Statement = [
@@ -30,7 +30,7 @@ resource "aws_iam_role" "lambda_exec_role" {
             "dynamodb:GetRecords",
             "dynamodb:ListStreams"
           ]
-          Resource = var.dynamodb_stream_arn
+          Resource = "*"
         }
       ]
     })
