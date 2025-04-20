@@ -1,13 +1,23 @@
 provider "aws" {
-  region = "us-east-1" # ou sa-east-1, se quiser São Paulo
+  region = "us-east-1"  # ou sa-east-1, se preferir São Paulo
 }
 
+# Recuperando o segredo do ARN do DynamoDB Stream
+data "aws_secretsmanager_secret" "dynamodb_stream_arn_secret" {
+  name = "dynamodb_stream_arn"  # Nome do seu segredo no Secrets Manager
+}
+
+data "aws_secretsmanager_secret_version" "dynamodb_stream_arn_version" {
+  secret_id = data.aws_secretsmanager_secret.dynamodb_stream_arn_secret.id
+}
+
+# Criando o IAM Role para Lambda
 resource "aws_iam_role" "lambda_exec_role" {
   name = "lambda_exec_role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
+    Statement = [ {
       Action = "sts:AssumeRole"
       Effect = "Allow"
       Principal = {
@@ -18,13 +28,13 @@ resource "aws_iam_role" "lambda_exec_role" {
 
   # Política Inline para DynamoDB Streams
   inline_policy {
-    name = "dynamodb-streams-policy-v1"
+    name   = "dynamodb-streams-policy-v1"
     policy = jsonencode({
       Version = "2012-10-17"
       Statement = [
         {
-          Effect = "Allow"
-          Action = [
+          Effect   = "Allow"
+          Action   = [
             "dynamodb:DescribeStream",
             "dynamodb:GetShardIterator",
             "dynamodb:GetRecords",
@@ -42,12 +52,13 @@ resource "aws_iam_role" "lambda_exec_role" {
   }
 }
 
-
+# Attachando a política básica de execução do Lambda
 resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
   role       = aws_iam_role.lambda_exec_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+# Criando a função Lambda
 data "archive_file" "lambda_zip" {
   type        = "zip"
   source_file = "${path.module}/../app/lambda_function.py"
@@ -63,8 +74,9 @@ resource "aws_lambda_function" "hello_lambda" {
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 }
 
+# Mapeando o stream do DynamoDB com a função Lambda
 resource "aws_lambda_event_source_mapping" "dynamodb_stream_trigger" {
-  event_source_arn  = var.dynamodb_stream_arn
+  event_source_arn  = jsondecode(data.aws_secretsmanager_secret_version.dynamodb_stream_arn_version.secret_string)["DYNAMODB_STREAM_ARN"]
   function_name     = aws_lambda_function.hello_lambda.arn
   starting_position = "LATEST"
   batch_size        = 1

@@ -14,7 +14,6 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_REGION: ${{ secrets.AWS_REGION }}
-      DYNAMODB_STREAM_ARN: ${{ secrets.DYNAMODB_STREAM_ARN }}
 
     steps:
       - name: Checkout code
@@ -22,6 +21,13 @@ jobs:
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
+
+      # Passo para recuperar o segredo do Secrets Manager
+      - name: Retrieve DynamoDB Stream ARN from Secrets Manager
+        id: retrieve_stream_arn
+        run: |
+          STREAM_ARN=$(aws secretsmanager get-secret-value --secret-id dynamodb_stream_arn --query 'SecretString' --output text)
+          echo "DYNAMODB_STREAM_ARN=$STREAM_ARN" >> $GITHUB_ENV
 
       - name: Terraform Init
         run: |
@@ -32,11 +38,6 @@ jobs:
         run: |
           cd infra
           terraform validate
-
-      - name: Set DynamoDB Stream ARN variable
-        run: |
-          cd infra
-          terraform apply -var="dynamodb_stream_arn=${{ secrets.DYNAMODB_STREAM_ARN }}" -auto-approve
 
       - name: Copy Lambda function to Terraform directory
         run: |
