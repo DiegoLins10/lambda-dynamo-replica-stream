@@ -36,26 +36,29 @@ jobs:
         run: |
           cp app/lambda_function.py infra/lambda_function.py
 
-      - name: Check and Destroy Event Source Mapping if Exists
+      - name: Check if Event Source Mapping Exists
+        id: check_mapping
         run: |
           cd infra
-          EXISTING_MAPPING_UUID=$(terraform state list | grep aws_lambda_event_source_mapping.dynamodb_stream_trigger || echo "Mapping not found")
-          if [[ "$EXISTING_MAPPING_UUID" != "Mapping not found" ]]; then
-            echo "Deleting existing event source mapping..."
-            terraform destroy -target=aws_lambda_event_source_mapping.dynamodb_stream_trigger -auto-approve
+          # Verificar se o mapeamento já existe
+          EXISTING_MAPPING=$(terraform state list | grep aws_lambda_event_source_mapping.dynamodb_stream_trigger || echo "not found")
+          if [ "$EXISTING_MAPPING" != "not found" ]; then
+            echo "Event source mapping already exists. Skipping creation."
+            echo "exists=true" >> $GITHUB_ENV
           else
-            echo "No existing event source mapping found."
+            echo "No existing event source mapping found. Will create a new one."
+            echo "exists=false" >> $GITHUB_ENV
           fi
 
       - name: Import IAM Role if not in state
         run: |
           cd infra
-          terraform state list | grep aws_iam_role.lambda_exec_role || terraform import aws_iam_role.lambda_exec_role lambda_exec_role || echo "IAM Role not found for import"
+          terraform state list | grep aws_iam_role.lambda_exec_role || terraform import aws_iam_role.lambda_exec_role lambda_exec_role
 
       - name: Import Lambda function if not in state
         run: |
           cd infra
-          terraform state list | grep aws_lambda_function.hello_lambda || terraform import aws_lambda_function.hello_lambda lambda-dynamo-replica-stream || echo "Lambda not found for import"
+          terraform state list | grep aws_lambda_function.lambda-dynamo-replica-stream || terraform import aws_lambda_function.lambda-dynamo-replica-stream lambda-dynamo-replica-stream
 
       - name: Terraform Plan
         run: |
@@ -63,6 +66,7 @@ jobs:
           terraform plan
 
       - name: Terraform Apply
+        if: env.exists == 'false'  # Só aplica se não existir mapeamento
         run: |
           cd infra
           terraform apply -auto-approve
