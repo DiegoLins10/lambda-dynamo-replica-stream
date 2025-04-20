@@ -33,6 +33,11 @@ jobs:
           cd infra
           terraform validate
 
+      - name: Set DynamoDB Stream ARN variable
+        run: |
+          cd infra
+          terraform apply -var="dynamodb_stream_arn=${{ secrets.DYNAMODB_STREAM_ARN }}" -auto-approve
+
       - name: Copy Lambda function to Terraform directory
         run: |
           cp app/lambda_function.py infra/lambda_function.py
