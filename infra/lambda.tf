@@ -16,11 +16,32 @@ resource "aws_iam_role" "lambda_exec_role" {
     }]
   })
 
-    lifecycle {
+  # Política Inline para DynamoDB Streams
+  inline_policy {
+    name = "dynamodb-streams-policy"
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Effect = "Allow"
+          Action = [
+            "dynamodb:DescribeStream",
+            "dynamodb:GetShardIterator",
+            "dynamodb:GetRecords",
+            "dynamodb:ListStreams"
+          ]
+          Resource = local.dynamodb_stream_arn
+        }
+      ]
+    })
+  }
+
+  lifecycle {
     create_before_destroy = true
     prevent_destroy       = false
   }
 }
+
 
 resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
   role       = aws_iam_role.lambda_exec_role.name
@@ -43,7 +64,7 @@ resource "aws_lambda_function" "hello_lambda" {
 }
 
 resource "aws_lambda_event_source_mapping" "dynamodb_stream_trigger" {
-  event_source_arn  = local.dynamodb_stream_arn
+  event_source_arn  = var.dynamodb_stream_arn
   function_name     = aws_lambda_function.hello_lambda.arn
   starting_position = "LATEST"
   batch_size        = 1
