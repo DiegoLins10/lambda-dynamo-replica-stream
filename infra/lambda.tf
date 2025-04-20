@@ -30,7 +30,7 @@ resource "aws_iam_role" "lambda_exec_role" {
             "dynamodb:GetRecords",
             "dynamodb:ListStreams"
           ]
-          Resource = local.dynamodb_stream_arn
+          Resource = var.dynamodb_stream_arn
         }
       ]
     })
