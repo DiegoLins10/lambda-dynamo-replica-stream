@@ -27,6 +27,7 @@ def lambda_handler(event, context):
         )
         '''
         print(f"Mensagem enviada para o SNS")
+        print(json.dumps(data))
     return {
         'statusCode': 200,
         'body': json.dumps('Processamento concluído.')
