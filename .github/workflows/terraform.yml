@@ -49,15 +49,17 @@ jobs:
       - name: Import Event Source Mapping if not in state
         run: |
           cd infra
-          # Check if the event source mapping exists in the state
-          EVENT_SOURCE_UUID=$(terraform state list | grep aws_lambda_event_source_mapping.dynamodb_stream_trigger || echo "Mapping not found")
-          if [[ "$EVENT_SOURCE_UUID" != "Mapping not found" ]]; then
-            # Remove the event source mapping from Terraform state to avoid conflict
-            terraform state rm aws_lambda_event_source_mapping.dynamodb_stream_trigger
-            echo "Event Source Mapping removed from state"
+          # Verificar se o mapeamento de evento já existe na AWS
+          EVENT_SOURCE_UUID=$(aws lambda list-event-source-mappings --function-name lambda-dynamo-replica-stream --query "EventSourceMappings[?EventSourceArn=='arn:aws:dynamodb:us-east-1:909574177818:table/cadastro-pokemon/stream/2025-04-20T03:53:30.343'].UUID" --output text)
+
+          if [ "$EVENT_SOURCE_UUID" != "None" ]; then
+            # Se já existe, importar o mapeamento para o Terraform
+            terraform import aws_lambda_event_source_mapping.dynamodb_stream_trigger $EVENT_SOURCE_UUID
+            echo "Event source mapping imported"
           else
             echo "Event Source Mapping does not exist"
           fi
+
 
       - name: Terraform Plan
         run: |
