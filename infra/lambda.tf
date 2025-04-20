@@ -41,3 +41,10 @@ resource "aws_lambda_function" "hello_lambda" {
   filename      = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 }
+
+resource "aws_lambda_event_source_mapping" "dynamodb_stream_trigger" {
+  event_source_arn  = local.dynamodb_stream_arn
+  function_name     = aws_lambda_function.hello_lambda.arn
+  starting_position = "LATEST"
+  batch_size        = 1
+}
