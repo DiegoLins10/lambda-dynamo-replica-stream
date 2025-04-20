@@ -51,6 +51,7 @@ jobs:
           cd infra
           EVENT_SOURCE_UUID=$(terraform state list | grep aws_lambda_event_source_mapping.dynamodb_stream_trigger || echo "Mapping not found")
           if [[ "$EVENT_SOURCE_UUID" != "Mapping not found" ]]; then
+            # Import the existing Event Source Mapping using the UUID
             terraform import aws_lambda_event_source_mapping.dynamodb_stream_trigger $EVENT_SOURCE_UUID || echo "Event source mapping not found for import"
           else
             echo "Event Source Mapping does not exist"
