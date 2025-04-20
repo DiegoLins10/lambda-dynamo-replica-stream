@@ -76,7 +76,7 @@ resource "aws_lambda_function" "hello_lambda" {
 
 # Mapeando o stream do DynamoDB com a função Lambda
 resource "aws_lambda_event_source_mapping" "dynamodb_stream_trigger" {
-  event_source_arn  = jsondecode(data.aws_secretsmanager_secret_version.dynamodb_stream_arn_version.secret_string)["DYNAMODB_STREAM_ARN"]
+  event_source_arn  = jsondecode(data.aws_secretsmanager_secret_version.dynamodb_stream_arn_version.secret_string)["dynamodb_stream_arn"]
   function_name     = aws_lambda_function.hello_lambda.arn
   starting_position = "LATEST"
   batch_size        = 1
