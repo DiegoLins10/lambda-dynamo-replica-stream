@@ -46,6 +46,16 @@ jobs:
           cd infra
           terraform state list | grep aws_lambda_function.hello_lambda || terraform import aws_lambda_function.hello_lambda lambda-dynamo-replica-stream || echo "Lambda not found for import"
 
+      - name: Import Event Source Mapping if not in state
+        run: |
+          cd infra
+          EVENT_SOURCE_UUID=$(terraform state list | grep aws_lambda_event_source_mapping.dynamodb_stream_trigger || echo "Mapping not found")
+          if [[ "$EVENT_SOURCE_UUID" != "Mapping not found" ]]; then
+            terraform import aws_lambda_event_source_mapping.dynamodb_stream_trigger $EVENT_SOURCE_UUID || echo "Event source mapping not found for import"
+          else
+            echo "Event Source Mapping does not exist"
+          fi
+
       - name: Terraform Plan
         run: |
           cd infra
